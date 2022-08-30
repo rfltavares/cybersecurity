@@ -1,0 +1,120 @@
+Nmap Commands
+If you are a beginner with very little knowledge about networks, you can start your Nmap journey by learning commands to scan against hosts or IP addresses like Nmap 23.12.34.2 (scan for the single IP address) and Nmap www.creativity.com (scan for hostname).
+
+Before we moving forward, have a look at Nmap’s basic command format: nmap<scan type><option><target> 
+
+Nmap provides commands for almost everything. You just need to have good background knowledge to explore Nmap’s real capabilities.
+
+1. Scan a Range of IP Address
+
+Aim: To scan the entire IP range.
+
+If you wish to scan the entire CIDR(classless inter-domain routing) range of IP addresses, you can use this command.
+
+Command: nmap <IP range>
+
+Example: nmap 162.16.121.125-135 (here IP range is separated by a dash )
+
+In our example, Nmap will scan the IP addresses from 162.16.121.25/24 to 162.16.121.35/24.
+
+2. Port Scanning
+
+Aim: To scan a specific port or entire port range.
+
+Nmap is the best port scanning tool. Performing port scans will provide you with details about port services and states. And not just that Nmap also provides options to scan popular ports and discover open ports. We will see that in the latter section of the article. 
+
+Command: nmap -p <numeric value> <IP>
+
+Example: nmap -p 80 192.168.20.128
+
+You can also scan all 65535 ports for your localhost computer by using this command–
+
+nmap -p 1-65535 localhost. 
+
+3. Ping Scan Using Nmap
+Aim: Host detection
+
+This is one of the most popular and easiest Nmap commands for host detection. If you are interested in knowing which hosts are running in your network, you should use this command. It also provides the option to find out multiple hosts or any specific host. This command returns the IP address and MAC address of available hosts but provides no information about ports. In simple words, it finds all devices in the defined range. And then you can check if there are any IP addresses that you are not familiar with or you can’t account for. 
+
+This command sends an ICMP (Internet Control Message Protocol) echo request to all IP addresses of the network. But the major disadvantage of this type of scan is that some remote hosts block IP-based ping packets. Its popular example is– Windows Firewall with advanced security blocks ICMP echoes requests packets by default. This command comes up with details about the host and in comparison to other scannings, it is less aggressive. 
+
+Command: Nmap -sP <target>
+
+Example: Nmap -sP 192.168.2.1/24
+
+In the above example, the “-sP” command will scan the list of devices running on the 192.168.2.1/24 subnet.
+
+4. Saving the Nmap Scan Output to a File
+
+Aim: To save the result of the Nmap scan to a file or XML.
+
+Security tool Nmap has become a crucial tool in the cyber security field. And Nmap allows its users to export or save scan results into the text file or XML. 
+
+Command: nmap -oN output.txt example.com (This command will export Nmap scan into a text file)
+
+Command: nmap -oX output.xml example.com (This command will save the output of Nmap scanning in XML)
+
+5. Most Popular Ports Scanning
+Aim: To scan the fixed number of most popular ports. 
+
+In order to apply this command you have to use the “–top-ports” option with a specific numeric value. This option gives you the ability to scan top ports. However, in Nmap, you also have the option to select the number of top ports to scan. This command allows users to get better and faster results. 
+
+Command: nmap –top-ports <numeric value> <IP address/Domain>
+
+Example: nmap –top-ports 15 196.134.5.67
+
+In our example, we have used the “–top-ports” option to specify that we need to scan the top 15 ports of the IP address 196.134.5.67
+
+6. Display Open Ports
+
+Aim: To detect open ports.
+
+Finding open ports (target ports that respond to UDP/TCP/SCTP requests) can be the first step to protecting and hacking any network. And if you only want to find ports you can connect to, then this command can be really useful to you.
+
+Command: nmap — open<IP address/domain name> 
+
+Example: nmap — open 198.152.45.33
+
+In the above example, we are using “–open” parameter with IP address 198.152.45.33 so that the Nmap command only shows us the ports with the open state. 
+
+7. Exclude Host/ IP Addresses for the Scan
+Aim: To exclude the host/IP addresses for the scan.
+
+If you want to exclude hosts/ IP address/ network, Nmap provides you with a specific command for this purpose. As the name suggests this command excludes a single target/list of the target from the scan. 
+
+Command: nmap <range of IP address> — exclude<IP address to exclude>
+
+Example: nmap 172.16.121.1/24 — exclude 172.16.121.10
+
+In the above example, we are using the “– exclude”  command-line option to exclude IP address 172.16.121.10 from the scan.
+
+Note – “–exclude command” accepts single IP address, single host, specific ranges, and whole network.
+
+8. Service Version Detection
+Aim: Detection of services.
+
+Nmap has a database of more than 2000 services and associated ports for example– SSH(port 22) and HTTP (port 80). So while doing network inventories if you want to know which versions are running, you can use the Nmap version detection (-sV) command. Knowing the exact version number can be really helpful while finding which exploits your server is vulnerable to. 
+
+Command: nmap -sV<IP>
+
+Example: nmap -sV 168.121.34.56
+
+In the above example, we are performing a version scan by using the “sV” command and it will give us a list of services with its versions.
+
+Conclusion
+As we have seen, with single Nmap command you can scan your entire network–that’s the power of Nmap. Nmap is an extremely powerful tool. And most importantly, if you want to set your foot hacking world, learning about this tool can be really fruitful for you. It can potentially be used for both white-hat hacking and black-hat hacking. In fact, Nmap is a must-have tool for ethical hackers. You can use Nmap to protect your network. There are a bunch of Nmap alternatives available in the market. But it has already set the benchmark. Security teams of different organizations and network experts often use Nmap to find commonly abused protocols like RMI (Remote Method Invocation) and HTTP. Also, securities companies use this software to inspect the attack their systems can potentially face and find out what weaknesses hackers could exploit.  
+
+Bonus Tip: If you want to learn more about don’t forget to check Nmap’s official website.
+
+Frequently Asked Questions on Nmap. 
+What is Nmap used for?
+Nmap or network mapper is an open-source network scanning tool that is popularly used by network administrators, hackers, and cyber security experts to map networks.  
+
+What are the features of Nmap?
+Network exploration, security auditing, vulnerability scanning, ping sweeps, host discovery, OS, and version detection are some features of network mapper(Nmap).
+
+Why do hackers use Nmap?
+To exploit the vulnerabilities of the system and get access to uncontrolled ports of the system, hackers use Nmap.
+
+Is it legal to use Nmap?
+Yes, it’s completely legal and totally safe to use Nmap until and unless you are not committing any crime. For more information, you can check the policy of your country. 
