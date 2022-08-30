@@ -1,0 +1,187 @@
+Using Python for CyberSecurity functions, including malware analysis, scanning, and penetration testing tasks, has become an industry standard. One of the factors that attract engineers to a career in CyberSecurity is the continually evolving landscape and toolsets. CyberSecurity engineers need to have an agile approach to testing and evaluating the security of the applications under their responsibility. As a language, Python is user-friendly and has an elegant simplicity, making it the language of choice for many security engineers.
+
+In this article, we’re going to talk about the importance of using Python for CyberSecurity, particularly security-testing applications. We’ll also build a collection of simple Python scripts to get you started with your security testing. In effect, we’ll be attempting to hack an application and your local network. 
+
+This shouldn’t need to be said, but in case you’re tempted: please ensure that you’re using these scripts against applications and networks that you own and control; otherwise, you might find yourself venturing into criminal territory.
+
+Identifying The Attack Surface
+As security engineers, the first thing we need to consider is our attack surface. I like to think of an application like a house. If we play the role of a bad actor trying to burglarize a home, we might do some of the following:  
+
+Look for open doors and windows
+Try to find plans or blueprints for the house to look for weaknesses
+Try a skeleton key or lock pick on any of the doors
+Sneak into the house by pretending to be someone who lives there
+Hide something malicious in a package and see if the owners bring it inside without checking
+All of these apply to your application, and its infrastructure as well:
+
+We can use a port scanner to look for open doors and windows 
+We can investigate the frameworks and languages used to identify known exploits
+We can attempt to crack any authentication
+We can assume a role or pretend to be a valid user
+We can try to embed malicious code inside a valid packet for ingestion
+Let’s investigate some ways we can simulate some of these attacks using simple Python scripts. If you would like to try these scripts out yourself, I’ve uploaded them to a GitHub repository.
+
+Port Scanning
+The first test we’ll execute looks for different ways to infiltrate the target system. We do this by scanning for open ports using a script like portScanner.py. An open port can provide an ingress point if we can determine what type of traffic the target machine is expecting on that port. We’ll be using sockets to test for connection, and a threaded model to speed up the process. I set my thread pool at 500 concurrent requests and checked every port up to 10,000. I include these as constants to make them easy to change.
+
+import socket
+from concurrent import futures
+
+def check_port(targetIp, portNumber, timeout):
+   TCPsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+   TCPsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+   TCPsock.settimeout(timeout)
+   try:
+       TCPsock.connect((targetIp, portNumber))
+       return (portNumber)
+   except:
+       return
+
+def port_scanner(targetIp, timeout):
+   threadPoolSize = 500
+   portsToCheck = 10000
+
+   executor = futures.ThreadPoolExecutor(max_workers=threadPoolSize)
+   checks = [
+       executor.submit(check_port, targetIp, port, timeout)
+       for port in range(0, portsToCheck, 1)
+   ]
+
+   for response in futures.as_completed(checks):
+       if (response.result()):
+           print('Listening on port: {}'.format(response.result()))
+
+def main():
+   targetIp = input("Enter the target IP address: ")
+   timeout = int(input("How long before the connection times out: "))
+   port_scanner(targetIp, timeout)
+
+if __name__ == "__main__":
+   main()
+If we execute this script, we’ll see which ports on the target machine are listening and potentially vulnerable for an exploit. I ran it against a popular IoT device, which I have attached to my local network, and received some interesting results.
+
+kali@kali:~/SecurityTesting/PythonScripts$ python portScanner.py
+Enter the target IP address: 172.16.0.50
+How long before the connection times out: 1
+Listening on port: 7778
+Listening on port: 8012
+Listening on port: 8008
+Listening on port: 8009
+Listening on port: 8443
+Listening on port: 9000
+Packet Sniffing
+For our next test, we’ll do some packet sniffing. Packet sniffing is essentially putting a wiretap on a system. We could use a tool like Wireshark, or we could have a little fun and write a simple Python script (packetSniffer.py) to achieve similar results. Capturing and viewing network packets lets us perform reconnaissance on the target system; and in the next step, we can use this information to manipulate the contents of the packet.
+
+We’ll use the socket library to find packets on our network, and then parse them out to inspect the contents. There are a couple of things to note about this approach. Invoking a socket results in calls to the operating system socket APIs, and so you’ll need to change your configuration depending on the operating system you’re using. The arguments used to create the socket in this script should work on any UNIX based operating system.
+
+You’ll also need to set your NIC to use promiscuous mode if you want to sniff traffic on your local network, and this may require additional permissions.
+
+import socket
+import struct
+
+def ethernet_frame(data):
+   dest_mac, src_mac, proto = struct.unpack('! 6s 6s H', data[:14])
+   return format_mac_addr(dest_mac), format_mac_addr(src_mac), socket.htons(proto), data[14:]
+
+def format_mac_addr(bytes_addr):
+   bytes_str = map('{:02x}'.format, bytes_addr)
+   return ':'.join(bytes_str).upper()
+
+def main():
+   conn = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
+   while True:
+       raw_data, addr = conn.recvfrom(65535)
+       dest_mac, src_mac, eth_proto, data = ethernet_frame(raw_data)
+       if eth_proto == 8:
+           print('\nEthernet Frame:')
+           print('Destination: {}, Source: {}, Protocol: {}'.format(dest_mac, src_mac, eth_proto))
+           print(data)
+
+if __name__ == "__main__":
+  main()
+This script captures entire network frames. I included two helper functions that extract the MAC address of the source and destination of the frame, and the protocol used to format them for output. If you’d like to extract additional information and understand more about the composition of a network frame, I’d highly recommend this YouTube series.
+
+My local network has significant amounts of traffic, so I limited the output to protocol number 8, which is the TCP/IP Exterior Gateway Protocol.  Below are some of the calls I isolated from a curl to google.com. You can see a request from my Mac Address to the Google server, and the responses, including an HTTP 301 Redirect to www.google.com.
+
+Destination: 52:54:00:12:35:02, Source: 08:00:27:1F:30:76, Protocol: 8
+b'E\x00\x00r\x8a\x11@\x00@\x06\xe8\xbe\n\x00\x02\x0f\xac\xd9\x0e\xce\xeb>\x00P\xa5\xef\x1e\x8b\x06\x0b\xda\x02P\x18\xfa\xf0\xc8\x1a\x00\x00GET / HTTP/1.1\r\nHost: google.com\r\nUser-Agent: curl/7.67.0\r\nAccept: */*\r\n\r\n'
+ 
+Ethernet Frame:
+Destination: 08:00:27:1F:30:76, Source: 52:54:00:12:35:02, Protocol: 8
+b'E\x00\x00(\xee\xcf\x00\x00@\x06\xc4J\xac\xd9\x0e\xce\n\x00\x02\x0f\x00P\xeb>\x06\x0b\xda\x02\xa5\xef\x1e\xd5P\x10\xff\xffW\xbd\x00\x00\x00\x00\x00\x00\x00\x00'
+ 
+Ethernet Frame:
+Destination: 08:00:27:1F:30:76, Source: 52:54:00:12:35:02, Protocol: 8
+b'E\x00\x028\xee\xd0\x00\x00@\x06\xc29\xac\xd9\x0e\xce\n\x00\x02\x0f\x00P\xeb>\x06\x0b\xda\x02\xa5\xef\x1e\xd5P\x18\xff\xff.\x0f\x00\x00HTTP/1.1 301 Moved Permanently\r\nLocation: http://www.google.com/\r\nContent-Type: text/html; charset=UTF-8\r\nDate: Mon, 16 Mar 2020 16:54:09 GMT\r\nExpires: Wed, 15 Apr 2020 16:54:09 GMT\r\nCache-Control: public, max-age=2592000\r\nServer: gws\r\nContent-Length: 219\r\nX-XSS-Protection: 0\r\nX-Frame-Options: SAMEORIGIN\r\n\r\n<HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">\n<TITLE>301 Moved</TITLE></HEAD><BODY>\n<H1>301 Moved</H1>\nThe document has moved\n<A HREF="http://www.google.com/">here</A>.\r\n</BODY></HTML>\r\n'
+Using Python For CyberSecurity: TCP Packet Injection
+Once we can sniff out web packets from one device to another, we can build out packets that have the same headers and insert updated or malicious information into the packet using a script like packetInjection.py. Some examples that use this approach include denial-of-service and man-in-the-middle attacks. You can also intercept and manipulate the contents of packages discreetly at the edge of a network to prevent or adjust the flow of information.
+
+We’ll keep this example very simple and build an ICMP packet, such as what would be sent when you send a ping, or initiate a connection to a remote device. We’ll use the diagram below to understand the structure of an ICMP packet and build our packet accordingly.
+
+The MAC header consists of the source and destination MAC addresses, and we’ll let the socket add these when the script sends the packet. We’ll add the IP header and the ICMP header. The IP header consists of 2 Bytes, the first represents the protocol type; and then second, the code. We’ll set the type to 8, which is the EGP type code we talked about above. We’ll set the code to 0, which sends a clear field.
+
+The ICMP header has a checksum, an identifier, and a sequence number. The checksum is calculated based on the size of the package. We’ll set this to 0, and then calculate the size after we compile the package. The packet recipient uses the checksum value to verify that the package contents haven’t been tampered with or corrupted during transport. The identifier is a unique identifier for the packet, we’ll use a random number generator for this, and we’ll set the sequence to 1, indicating that it is the first packet in the sequence. In our case, the sequence contains a single packet.
+
+import socket
+import struct
+from random import randint
+
+def create_icmp_packet():
+   type = 8
+   code = 0
+   chksum = 0
+   id = randint(0, 0xFFFF)
+   seq = 1
+   checksum = calculate_checksum(struct.pack("!BBHHH", type, code, chksum, id, seq))
+   packet = struct.pack("!BBHHH", type, code, socket.htons(checksum), id, seq)
+   return packet
+
+def calculate_checksum(packet):
+   s = 0
+   n = len(packet) % 2
+   for i in range(0, len(packet) - n, 2):
+       s += packet[i] + (packet[i + 1] << 8)
+   if n:
+       s += packet[i + 1]
+   while s >> 16:
+       s = (s & 0xFFFF) + (s >> 16)
+   s = ~s & 0xFFFF
+   return s
+
+def main():
+   s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
+   s.sendto(create_icmp_packet(), ("172.16.0.111", 80))
+
+
+if __name__ == "__main__":
+  main()
+Finally, we’ll open a socket and use it to send the packet to a remote machine. I’m sending this to 172.16.0.111:80, which is a machine on my network running an Apache Web Server. I started the packet-sniffing script we created above in a different window so that I could observe the traffic.
+
+The packet that the script above generated and sent through the socket looks as follows:
+
+ b'\x08\x00f\xbb\x91C\x00\x01' 
+The resulting network traffic that the script generated is shown below:
+
+Ethernet Frame:
+Destination: 52:54:00:12:35:02, Source: 08:00:27:1F:30:76, Protocol: 8
+b'E\x00\x00\x1c\xd1\xc0@\x00@\x01\xb0\x92\n\x00\x02\x0f\xac\x10\x00o\x08\x00f\xbb\x91C\x00\x01'
+ 
+Ethernet Frame:
+Destination: 08:00:27:1F:30:76, Source: 52:54:00:12:35:02, Protocol: 8
+b'E\x00\x00\x1cg\xe2\x00\x00?\x01[q\xac\x10\x00o\n\x00\x02\x0f\x00\x00n\xbb\x91C\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+Learning More
+The scripts above provide some elementary examples of ways in which you can leverage the elegant simplicity of Python to validate the security of your applications or expose weaknesses for your team to fix before proceeding with deployment.
+
+You can start with these scripts, and then draw from your own experience on the Internet to develop more comprehensive and sophisticated tests. You can even include such scripts as part of your automated deployment process to ensure that you’re not deploying updates to your application that might compromise its security.
+
+Next Steps
+Check out the source code on Github. 
+Download the State Tool, and automatically install ActivePython into a virtual environment so you can modify and test out the scripts on your system:
+On Linux or Mac, enter:
+sh <(curl -q https://platform.activestate.com/dl/cli/install.sh)
+state activate ActiveState/ActivePython-3.6
+On Windows, run the following in Powershell:
+IEX(New-Object Net.WebClient).downloadString('https://platform.activestate.com/dl/cli/install.ps1')
+And then run the following at the command prompt:
+
+ state activate ActiveState/ActivePython-3.6 
