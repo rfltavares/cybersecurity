@@ -1,8 +1,8 @@
-Kali Linux commands for penetration tests
+# Kali Linux commands for penetration tests
 
 Installing Kali Linux can be done in several ways, including as a primary operating system, a virtual machine, or alongside another OS (dual booting). Below is a step-by-step guide for each method. Before proceeding, it's important to ensure you have backed up any important data and that your system meets the necessary requirements.
 
-Prerequisites
+## Prerequisites
 
 1. System Requirements:
    - Minimum 2 GB RAM (4 GB or more recommended)
@@ -15,7 +15,7 @@ Prerequisites
 3. Kali Linux ISO:
    - Download the latest Kali Linux ISO from the official [Kali Linux download page](https://www.kali.org/downloads/).
 
-Method 1: Install Kali Linux on a Physical Machine
+### Method 1: Install Kali Linux on a Physical Machine
 
 Step 1: Create Bootable USB/DVD
 
@@ -53,7 +53,7 @@ Step 3: Install Kali Linux
 6. Follow the installation prompts, selecting packages and configuring the system as needed.
 7. Once installation is complete, reboot the system and remove the USB/DVD when prompted.
 
-Method 2: Install Kali Linux in Virtual Machine
+### Method 2: Install Kali Linux in Virtual Machine
 
 Step 1: Install Virtualization Software
 
@@ -72,7 +72,7 @@ Step 3: Install Kali Linux
 1. Boot the newly created VM.
 2. Follow the same steps as the physical installation above to install Kali.
 
-Method 3: Dual Boot Kali Linux alongside another OS
+### Method 3: Dual Boot Kali Linux alongside another OS
 
 1. Follow the creating bootable USB/DVD steps above.
 2. In the partitioning step during installation, select to create space for Kali alongside your existing operating system.
@@ -93,6 +93,6 @@ Post-Installation
 3. Learn More: 
    Familiarize yourself with Kali Linux by checking out the official Kali Linux documentation and tutorials.
 
-Conclusion
+### Conclusion
 
 Kali Linux is a powerful distribution for security professionals and enthusiasts. Always ensure you're following ethical practices when using Kali for penetration testing. If you encounter issues during installation, feel free to seek help from the community or forums related to Kali Linux.
